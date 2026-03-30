@@ -118,6 +118,86 @@ cd apps/web
 npm run dev
 ```
 
+## Production Deployment On One EC2 Instance
+
+This repo now includes a production Compose file:
+
+- [docker-compose.prod.yml](/Users/abdulazizmamadzhonov/Documents/service/infra/docker-compose.prod.yml)
+
+Use it instead of the dev compose file on EC2.
+
+### 1. Prepare the server
+
+Amazon Linux 2023 uses the `ec2-user` account.
+
+Install Docker:
+
+```bash
+sudo dnf update -y
+sudo dnf install -y docker git
+sudo systemctl enable --now docker
+sudo usermod -aG docker ec2-user
+newgrp docker
+docker --version
+docker compose version
+```
+
+### 2. Copy the repo to the server
+
+If you do not have a Git remote yet, copy the project directly:
+
+```bash
+scp -i restaurant-service.pem -r ./service ec2-user@YOUR_EC2_PUBLIC_IP:~/service
+```
+
+Then connect:
+
+```bash
+ssh -i restaurant-service.pem ec2-user@YOUR_EC2_PUBLIC_IP
+cd ~/service
+```
+
+### 3. Create production env files
+
+```bash
+cp apps/api/.env.production.example apps/api/.env.production
+cp apps/web/.env.production.example apps/web/.env.production
+```
+
+Then edit both files and replace:
+
+- `YOUR_EC2_PUBLIC_IP`
+- `SECRET_KEY`
+- Stripe placeholders if needed
+
+Important:
+
+- `SECRET_KEY` should be a long random value
+- `FRONTEND_ORIGIN` must match your public web URL
+- `MEDIA_BASE_URL` must match your public API media URL
+
+### 4. Start the production stack
+
+```bash
+export NEXT_PUBLIC_API_URL=http://YOUR_EC2_PUBLIC_IP:8000/api/v1
+export NEXT_PUBLIC_APP_URL=http://YOUR_EC2_PUBLIC_IP:3000
+docker compose -f infra/docker-compose.prod.yml up --build -d
+```
+
+### 5. Open the app
+
+- Web: `http://YOUR_EC2_PUBLIC_IP:3000`
+- API health: `http://YOUR_EC2_PUBLIC_IP:8000/healthz`
+
+### 6. Inspect logs
+
+```bash
+docker compose -f infra/docker-compose.prod.yml ps
+docker compose -f infra/docker-compose.prod.yml logs -f api
+docker compose -f infra/docker-compose.prod.yml logs -f web
+docker compose -f infra/docker-compose.prod.yml logs -f worker
+```
+
 ## Authentication Behavior
 
 - Public QR routes are open

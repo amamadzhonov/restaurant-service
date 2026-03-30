@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+.env
+.env.*
+.venv/
+*.pyc
+*.pyo
+*.pyd
+media/
+restaurant_menu_api.egg-info/
