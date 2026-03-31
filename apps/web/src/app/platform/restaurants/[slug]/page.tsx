@@ -2,10 +2,12 @@ import { notFound, redirect } from "next/navigation";
 
 import { PlatformRestaurantDetail } from "@/components/platform-restaurant-detail";
 import { SessionPanel } from "@/components/session-panel";
+import { getTranslatorServer } from "@/lib/i18n-server";
 import { routeForSession } from "@/lib/session-routing";
 import { getAuthSessionServer, getPlatformRestaurantDetailServer } from "@/lib/server-api";
 
 export default async function PlatformRestaurantPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { t } = await getTranslatorServer();
   const { slug } = await params;
   const session = await getAuthSessionServer();
   if (!session) {
@@ -22,18 +24,16 @@ export default async function PlatformRestaurantPage({ params }: { params: Promi
   return (
     <main className="app-shell">
       <section className="hero-panel">
-        <span className="eyebrow">Restaurant Support View</span>
-        <h1 className="display">Support the restaurant without becoming its admin.</h1>
-        <p className="lede">
-          The platform detail page is intentionally focused: profile, access, users, devices, and today&apos;s service state.
-        </p>
+        <span className="eyebrow">{t("platform_detail.page_eyebrow")}</span>
+        <h1 className="display">{t("platform_detail.page_title")}</h1>
+        <p className="lede">{t("platform_detail.page_description")}</p>
       </section>
       <section className="grid two section">
         <SessionPanel
           contextLabel={`platform support for ${slug}`}
           defaultEmail="owner@platform.local"
           demoRole="super_admin"
-          title="Super admin session"
+          title={t("platform.session_title")}
         />
       </section>
       <section className="section">

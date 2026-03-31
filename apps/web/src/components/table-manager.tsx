@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
 import type { TableRecord } from "@/lib/types";
 
@@ -9,10 +10,11 @@ export function TableManager({ slug, tables: initialTables }: { slug: string; ta
   const [tables, setTables] = useState(initialTables);
   const [tableNumber, setTableNumber] = useState("");
   const [message, setMessage] = useState("");
+  const { t } = useI18n();
 
   async function createTable(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Creating table...");
+    setMessage(t("tables.creating"));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/tables`, {
         method: "POST",
@@ -21,20 +23,20 @@ export function TableManager({ slug, tables: initialTables }: { slug: string; ta
         body: JSON.stringify({ table_number: tableNumber }),
       });
       if (!response.ok) {
-        setMessage("Table creation failed.");
+        setMessage(t("tables.create_failed"));
         return;
       }
       const created = (await response.json()) as TableRecord;
       setTables((current) => [...current, created].sort((a, b) => a.table_number.localeCompare(b.table_number)));
       setTableNumber("");
-      setMessage("Table created.");
+      setMessage(t("tables.created"));
     } catch {
-      setMessage("Backend unavailable. Using demo data preview.");
+      setMessage(t("tables.backend_unavailable"));
     }
   }
 
   async function clearClaim(table: TableRecord) {
-    setMessage(`Clearing waiter on table ${table.table_number}...`);
+    setMessage(t("tables.clearing", { table: table.table_number }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/tables/${table.id}`, {
         method: "PUT",
@@ -43,32 +45,32 @@ export function TableManager({ slug, tables: initialTables }: { slug: string; ta
         body: JSON.stringify({ current_waiter_user_id: null }),
       });
       if (!response.ok) {
-        setMessage("Could not clear waiter claim.");
+        setMessage(t("tables.clear_failed"));
         return;
       }
       const updated = (await response.json()) as TableRecord;
       setTables((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
-      setMessage("Waiter claim cleared.");
+      setMessage(t("tables.cleared"));
     } catch {
-      setMessage("Backend unavailable. Table actions need the API.");
+      setMessage(t("tables.backend_unavailable"));
     }
   }
 
   async function deleteTable(table: TableRecord) {
-    setMessage(`Deleting table ${table.table_number}...`);
+    setMessage(t("tables.deleting", { table: table.table_number }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/tables/${table.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!response.ok) {
-        setMessage("Table deletion failed.");
+        setMessage(t("tables.delete_failed"));
         return;
       }
       setTables((current) => current.filter((entry) => entry.id !== table.id));
-      setMessage("Table deleted.");
+      setMessage(t("tables.deleted"));
     } catch {
-      setMessage("Backend unavailable. Table actions need the API.");
+      setMessage(t("tables.backend_unavailable"));
     }
   }
 
@@ -76,15 +78,15 @@ export function TableManager({ slug, tables: initialTables }: { slug: string; ta
     <div className="stack">
       <form className="form-card stack" onSubmit={createTable}>
         <div>
-          <h3>Add a table</h3>
-          <p className="muted">Each table gets a stable opaque code for QR routing, waiter claiming, and admin lookup.</p>
+          <h3>{t("tables.add_table")}</h3>
+          <p className="muted">{t("tables.add_table_description")}</p>
         </div>
         <label className="field">
-          <span>Table number</span>
+          <span>{t("tables.table_number")}</span>
           <input onChange={(event) => setTableNumber(event.target.value)} value={tableNumber} />
         </label>
         <button className="button" type="submit">
-          Generate QR route
+          {t("tables.generate_qr")}
         </button>
         {message ? <div className="muted">{message}</div> : null}
       </form>
@@ -94,25 +96,27 @@ export function TableManager({ slug, tables: initialTables }: { slug: string; ta
           <article className="table-card stack" key={table.id}>
             <div className="section-header">
               <div>
-                <h3>Table {table.table_number}</h3>
+                <h3>{t("common.table", { table: table.table_number })}</h3>
                 <div className="muted">{table.code}</div>
               </div>
               <span className={`status-pill ${table.current_waiter_user_id ? "active" : "grace"}`}>
-                {table.current_waiter_user_id ? "claimed" : "open"}
+                {table.current_waiter_user_id ? t("tables.claimed") : t("tables.open")}
               </span>
             </div>
             <a className="chip" href={table.qr_code_url ?? "#"} target="_blank">
-              {table.qr_code_url ?? "No QR route"}
+              {table.qr_code_url ?? t("tables.no_qr_route")}
             </a>
             <div className="muted">
-              {table.current_waiter_name ? `Current waiter: ${table.current_waiter_name}` : "No waiter currently assigned"}
+              {table.current_waiter_name
+                ? t("tables.current_waiter", { name: table.current_waiter_name })
+                : t("tables.no_waiter")}
             </div>
             <div className="chip-row">
               <button className="ghost-button" disabled={!table.current_waiter_user_id} onClick={() => clearClaim(table)} type="button">
-                Clear waiter
+                {t("tables.clear_waiter")}
               </button>
               <button className="ghost-button" onClick={() => deleteTable(table)} type="button">
-                Delete table
+                {t("tables.delete_table")}
               </button>
             </div>
           </article>

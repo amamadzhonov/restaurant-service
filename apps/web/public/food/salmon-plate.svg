@@ -1,0 +1,35 @@
+<svg width="480" height="480" viewBox="0 0 480 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="plateShadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(240 246) rotate(90) scale(168 182)">
+      <stop stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#F0E6D7"/>
+    </radialGradient>
+    <linearGradient id="salmonFill" x1="162" y1="197" x2="332" y2="311" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB48E"/>
+      <stop offset="1" stop-color="#D96746"/>
+    </linearGradient>
+    <linearGradient id="citrusFill" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFE48F"/>
+      <stop offset="1" stop-color="#F6B83E"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="240" cy="252" rx="176" ry="150" fill="url(#plateShadow)"/>
+  <ellipse cx="240" cy="252" rx="138" ry="114" fill="#FFF7EC"/>
+  <ellipse cx="240" cy="252" rx="116" ry="93" fill="#F6F1E8"/>
+  <path d="M165 241C188 194 256 178 309 209C340 227 353 259 344 286C332 319 293 340 241 337C188 333 147 306 144 271C142 260 149 251 165 241Z" fill="url(#salmonFill)"/>
+  <path d="M176 258C207 231 263 229 307 247" stroke="#FFD7C4" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
+  <path d="M188 288C224 270 271 274 304 291" stroke="#FFD7C4" stroke-width="8" stroke-linecap="round" opacity="0.45"/>
+  <circle cx="314" cy="185" r="30" fill="url(#citrusFill)"/>
+  <circle cx="314" cy="185" r="22" fill="#FFF7D1"/>
+  <path d="M314 163V207" stroke="#F4BC47" stroke-width="3"/>
+  <path d="M292 185H336" stroke="#F4BC47" stroke-width="3"/>
+  <path d="M298 169L330 201" stroke="#F4BC47" stroke-width="3"/>
+  <path d="M298 201L330 169" stroke="#F4BC47" stroke-width="3"/>
+  <ellipse cx="162" cy="197" rx="20" ry="8" transform="rotate(-28 162 197)" fill="#6F9C5B"/>
+  <ellipse cx="185" cy="181" rx="18" ry="7" transform="rotate(12 185 181)" fill="#88B46D"/>
+  <ellipse cx="321" cy="305" rx="22" ry="8" transform="rotate(-18 321 305)" fill="#6F9C5B"/>
+  <ellipse cx="342" cy="287" rx="14" ry="6" transform="rotate(22 342 287)" fill="#88B46D"/>
+  <circle cx="190" cy="312" r="7" fill="#E8A73C"/>
+  <circle cx="205" cy="322" r="5" fill="#E8A73C"/>
+  <circle cx="276" cy="178" r="6" fill="#88B46D"/>
+</svg>

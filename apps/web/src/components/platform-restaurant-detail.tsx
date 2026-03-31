@@ -3,20 +3,26 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
+import {
+  formatCurrencyForLocale,
+  formatDateTimeForLocale,
+  formatTimeForLocale,
+  translateRole,
+  translateSource,
+  translateStatus,
+} from "@/lib/i18n";
 import type { PasswordResetTokenRecord, PlatformRestaurantDetailRecord } from "@/lib/types";
-
-function formatCurrency(value: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value));
-}
 
 export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaurant: PlatformRestaurantDetailRecord }) {
   const [restaurant, setRestaurant] = useState(initialRestaurant);
   const [message, setMessage] = useState("");
   const [resetToken, setResetToken] = useState<PasswordResetTokenRecord | null>(null);
+  const { locale, t } = useI18n();
 
   async function toggleAccess() {
-    setMessage(`Updating ${restaurant.name}...`);
+    setMessage(t("platform.updating", { name: restaurant.name }));
     try {
       const response = await fetch(`${apiBaseUrl}/platform/restaurants/${restaurant.slug}/access`, {
         method: "PUT",
@@ -25,19 +31,19 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
         body: JSON.stringify({ is_accessible: !restaurant.is_accessible }),
       });
       if (!response.ok) {
-        setMessage("Restaurant access update failed.");
+        setMessage(t("platform.update_failed"));
         return;
       }
       const updated = (await response.json()) as PlatformRestaurantDetailRecord;
       setRestaurant(updated);
-      setMessage("Restaurant access updated.");
+      setMessage(t("platform.updated"));
     } catch {
-      setMessage("Backend unavailable. Platform actions need the API.");
+      setMessage(t("platform.backend_unavailable"));
     }
   }
 
   async function requestReset(userId: string) {
-    setMessage("Generating password reset token...");
+    setMessage(t("platform_detail.generating_reset"));
     try {
       const response = await fetch(`${apiBaseUrl}/platform/users/${userId}/reset-password`, {
         method: "POST",
@@ -46,14 +52,14 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
         body: JSON.stringify({ expires_in_hours: 24 }),
       });
       if (!response.ok) {
-        setMessage("Password reset failed.");
+        setMessage(t("platform_detail.reset_failed"));
         return;
       }
       const payload = (await response.json()) as PasswordResetTokenRecord;
       setResetToken(payload);
-      setMessage("Password reset token created.");
+      setMessage(t("platform_detail.reset_created"));
     } catch {
-      setMessage("Backend unavailable. Platform actions need the API.");
+      setMessage(t("platform.backend_unavailable"));
     }
   }
 
@@ -62,42 +68,44 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
       <section className="content-card stack">
         <div className="inline-meta">
           <Link className="chip" href="/platform">
-            Back to restaurants
+            {t("common.back_to_restaurants")}
           </Link>
-          <span className={`status-pill ${restaurant.subscription_status}`}>{restaurant.subscription_status}</span>
+          <span className={`status-pill ${restaurant.subscription_status}`}>
+            {translateStatus(locale, restaurant.subscription_status)}
+          </span>
           <span className={`status-pill ${restaurant.is_accessible ? "active" : "cancelled"}`}>
-            {restaurant.is_accessible ? "enabled" : "suspended"}
+            {restaurant.is_accessible ? t("common.enabled") : t("common.suspended")}
           </span>
         </div>
         <div className="section-header">
           <div>
             <h2 className="section-title">{restaurant.name}</h2>
             <p className="section-subtitle">
-              {restaurant.slug} · {restaurant.address ?? "No address"}
+              {restaurant.slug} · {restaurant.address ?? t("common.no_address")}
             </p>
           </div>
           <button className="ghost-button" onClick={toggleAccess} type="button">
-            {restaurant.is_accessible ? "Suspend restaurant" : "Restore restaurant"}
+            {restaurant.is_accessible ? t("platform_detail.suspend_restaurant") : t("platform_detail.restore_restaurant")}
           </button>
         </div>
         <div className="grid three">
           <article className="metric-card">
-            <h3>Open today</h3>
+            <h3>{t("platform_detail.open_today")}</h3>
             <div className="metric-value">{restaurant.today_open_orders}</div>
           </article>
           <article className="metric-card">
-            <h3>Closed today</h3>
+            <h3>{t("platform_detail.closed_today")}</h3>
             <div className="metric-value">{restaurant.today_closed_orders}</div>
           </article>
           <article className="metric-card">
-            <h3>Ready backlog</h3>
+            <h3>{t("platform_detail.ready_backlog")}</h3>
             <div className="metric-value">{restaurant.ready_backlog}</div>
           </article>
         </div>
         <div className="inline-meta">
-          <span>{restaurant.admin_count} admins</span>
-          <span>{restaurant.device_count} devices</span>
-          <span>{restaurant.active_tables} active tables</span>
+          <span>{t("platform_detail.admins", { count: restaurant.admin_count })}</span>
+          <span>{t("platform_detail.devices", { count: restaurant.device_count })}</span>
+          <span>{t("platform_detail.active_tables", { count: restaurant.active_tables })}</span>
           <span>
             {restaurant.timezone} · {restaurant.currency}
           </span>
@@ -105,8 +113,8 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
         {message ? <div className="muted">{message}</div> : null}
         {resetToken ? (
           <div className="empty-state">
-            Reset token for user <strong>{resetToken.user_id}</strong>: <code>{resetToken.token}</code>
-            <div className="muted">Expires {resetToken.expires_at}</div>
+            {t("platform_detail.reset_token", { user: resetToken.user_id })} <code>{resetToken.token}</code>
+            <div className="muted">{t("platform_detail.expires", { time: formatDateTimeForLocale(locale, resetToken.expires_at) })}</div>
           </div>
         ) : null}
       </section>
@@ -115,19 +123,19 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
         <section className="content-card stack">
           <div className="section-header">
             <div>
-              <h3>Users</h3>
-              <p className="muted">Support-only controls for tenant access recovery.</p>
+              <h3>{t("platform_detail.users_title")}</h3>
+              <p className="muted">{t("platform_detail.users_description")}</p>
             </div>
           </div>
           {restaurant.users.map((user) => (
             <article className="order-card" key={user.id}>
               <div className="inline-meta">
                 <strong>{user.full_name}</strong>
-                <span className={`status-pill ${user.role}`}>{user.role}</span>
+                <span className={`status-pill ${user.role}`}>{translateRole(locale, user.role)}</span>
               </div>
               <div className="muted">{user.email}</div>
               <button className="ghost-button" onClick={() => requestReset(user.id)} type="button">
-                Generate reset token
+                {t("platform_detail.generate_reset")}
               </button>
             </article>
           ))}
@@ -136,19 +144,19 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
         <section className="content-card stack">
           <div className="section-header">
             <div>
-              <h3>Devices</h3>
-              <p className="muted">Live hardware footprint for this restaurant.</p>
+              <h3>{t("platform_detail.devices_title")}</h3>
+              <p className="muted">{t("platform_detail.devices_description")}</p>
             </div>
           </div>
           {restaurant.devices.map((device) => (
             <article className="order-card" key={device.id}>
               <div className="inline-meta">
                 <strong>{device.label}</strong>
-                <span className={`status-pill ${device.status}`}>{device.status}</span>
+                <span className={`status-pill ${device.status}`}>{translateStatus(locale, device.status)}</span>
               </div>
               <div className="muted">
                 {device.platform}
-                {device.assigned_table_id ? ` · table ${device.assigned_table_id}` : ""}
+                {device.assigned_table_id ? ` · ${t("common.table", { table: device.assigned_table_id })}` : ""}
               </div>
             </article>
           ))}
@@ -158,8 +166,8 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
       <section className="content-card stack">
         <div className="section-header">
           <div>
-            <h3>Today&apos;s recent orders</h3>
-            <p className="muted">Operational snapshot for support and health checks.</p>
+            <h3>{t("platform_detail.recent_orders_title")}</h3>
+            <p className="muted">{t("platform_detail.recent_orders_description")}</p>
           </div>
         </div>
         <div className="grid two">
@@ -167,15 +175,15 @@ export function PlatformRestaurantDetail({ initialRestaurant }: { initialRestaur
             <article className="order-card" key={order.id}>
               <div className="inline-meta">
                 <strong>
-                  Table {order.table_number}
+                  {t("common.table", { table: order.table_number })}
                   {order.guest_name ? ` · ${order.guest_name}` : ""}
                 </strong>
-                <span className={`status-pill ${order.status}`}>{order.status}</span>
+                <span className={`status-pill ${order.status}`}>{translateStatus(locale, order.status)}</span>
               </div>
-              <div className="muted">{order.source === "qr_guest" ? "Guest QR" : "Waiter assisted"}</div>
+              <div className="muted">{translateSource(locale, order.source)}</div>
               <div className="inline-meta">
-                <strong>{formatCurrency(order.total_price)}</strong>
-                <span>{new Date(order.created_at).toLocaleTimeString()}</span>
+                <strong>{formatCurrencyForLocale(locale, order.total_price)}</strong>
+                <span>{formatTimeForLocale(locale, order.created_at, restaurant.timezone)}</span>
               </div>
             </article>
           ))}

@@ -2,14 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
+import { formatCurrencyForLocale, translateSource, translateStatus } from "@/lib/i18n";
 import type { OrderRecord, OrderStatus } from "@/lib/types";
 
 const LANES: OrderStatus[] = ["placed", "preparing", "ready"];
-
-function formatCurrency(value: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value));
-}
 
 function nextStatuses(status: OrderStatus): OrderStatus[] {
   const transitions: Record<OrderStatus, OrderStatus[]> = {
@@ -27,6 +25,7 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
   const [orders, setOrders] = useState(initialOrders);
   const [message, setMessage] = useState("");
   const [recentIds, setRecentIds] = useState<string[]>([]);
+  const { locale, t } = useI18n();
 
   useEffect(() => {
     let active = true;
@@ -59,7 +58,7 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
         previous = new Map(payload.items.map((order) => [order.id, order.status]));
         setOrders(payload.items);
       } catch {
-        setMessage("Using cached board state while the backend is unavailable.");
+        setMessage(t("kitchen.cached"));
       }
     }
 
@@ -71,7 +70,7 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
   }, [initialOrders, slug]);
 
   async function moveOrder(orderId: string, status: OrderStatus) {
-    setMessage(`Moving order to ${status}...`);
+    setMessage(t("kitchen.moving", { status: translateStatus(locale, status) }));
     try {
       const response = await fetch(`${apiBaseUrl}/kitchen/${slug}/orders/${orderId}/status`, {
         method: "PUT",
@@ -80,15 +79,15 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
         body: JSON.stringify({ status }),
       });
       if (!response.ok) {
-        setMessage("Status update failed.");
+        setMessage(t("kitchen.status_failed"));
         return;
       }
       const updated = (await response.json()) as OrderRecord;
       setOrders((current) => current.map((order) => (order.id === updated.id ? updated : order)));
       setRecentIds([updated.id]);
-      setMessage(`Order moved to ${status}.`);
+      setMessage(t("kitchen.status_moved", { status: translateStatus(locale, status) }));
     } catch {
-      setMessage("Backend unavailable. Board actions need the API.");
+      setMessage(t("kitchen.backend_unavailable"));
     }
   }
 
@@ -101,12 +100,12 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
     <div className="stack">
       <section className="content-card stack">
         <div className="inline-meta">
-          <strong>Kitchen cadence</strong>
-          <span>{laneCounts.placed} new</span>
-          <span>{laneCounts.preparing} firing</span>
-          <span>{laneCounts.ready} ready</span>
+          <strong>{t("kitchen.summary_title")}</strong>
+          <span>{t("kitchen.summary_new", { count: laneCounts.placed })}</span>
+          <span>{t("kitchen.summary_firing", { count: laneCounts.preparing })}</span>
+          <span>{t("kitchen.summary_ready", { count: laneCounts.ready })}</span>
         </div>
-        <p className="muted">The board polls every 5 seconds and highlights orders that just arrived or changed lanes.</p>
+        <p className="muted">{t("kitchen.summary_description")}</p>
         {message ? <div className="muted">{message}</div> : null}
       </section>
 
@@ -115,8 +114,8 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
           <article className="lane-card" key={lane}>
             <div className="section-header">
               <div>
-                <h3 style={{ textTransform: "capitalize" }}>{lane}</h3>
-                <p className="section-subtitle">{laneCounts[lane]} orders</p>
+                <h3 style={{ textTransform: "capitalize" }}>{translateStatus(locale, lane)}</h3>
+                <p className="section-subtitle">{t("kitchen.orders_count", { count: laneCounts[lane] })}</p>
               </div>
             </div>
             <div className="stack">
@@ -126,12 +125,12 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
                   <div className={`order-card ${recentIds.includes(order.id) ? "flash-card" : ""}`} key={order.id}>
                     <div className="inline-meta">
                       <strong>
-                        Table {order.table_number}
+                        {t("common.table", { table: order.table_number })}
                         {order.guest_name ? ` · ${order.guest_name}` : ""}
                       </strong>
-                      <span className={`status-pill ${order.status}`}>{order.status}</span>
+                      <span className={`status-pill ${order.status}`}>{translateStatus(locale, order.status)}</span>
                     </div>
-                    <div className="muted">{order.notes ?? "No note"}</div>
+                    <div className="muted">{order.notes ?? t("common.no_note")}</div>
                     <div className="tag-row">
                       {order.items.map((item) => (
                         <span className="tag" key={item.id}>
@@ -140,20 +139,20 @@ export function KitchenBoard({ slug, initialOrders }: { slug: string; initialOrd
                       ))}
                     </div>
                     <div className="inline-meta">
-                      <strong>{formatCurrency(order.total_price)}</strong>
-                      <span>{order.source === "qr_guest" ? "guest QR" : "waiter assisted"}</span>
+                      <strong>{formatCurrencyForLocale(locale, order.total_price)}</strong>
+                      <span>{translateSource(locale, order.source)}</span>
                     </div>
                     <div className="chip-row">
                       {nextStatuses(order.status).map((nextStatus) => (
                         <button className="ghost-button" key={nextStatus} onClick={() => moveOrder(order.id, nextStatus)} type="button">
-                          {nextStatus}
+                          {translateStatus(locale, nextStatus)}
                         </button>
                       ))}
                     </div>
                   </div>
                 ))}
               {orders.filter((order) => order.status === lane).length === 0 ? (
-                <div className="empty-state">No orders in this lane.</div>
+                <div className="empty-state">{t("kitchen.no_orders_lane")}</div>
               ) : null}
             </div>
           </article>

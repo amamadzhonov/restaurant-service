@@ -1,0 +1,23 @@
+<svg width="480" height="420" viewBox="0 0 480 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cakeTop" x1="171" y1="120" x2="299" y2="227" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8EA"/>
+      <stop offset="1" stop-color="#F1E0C8"/>
+    </linearGradient>
+    <linearGradient id="cakeSide" x1="166" y1="170" x2="286" y2="269" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D8AD"/>
+      <stop offset="1" stop-color="#D9B880"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="238" cy="250" rx="170" ry="90" fill="#F9F3EA"/>
+  <path d="M162 174L300 148L360 250L220 282L162 174Z" fill="url(#cakeTop)"/>
+  <path d="M220 282L360 250V286L220 318V282Z" fill="url(#cakeSide)"/>
+  <path d="M162 174L220 282V318L162 210V174Z" fill="#C69B61"/>
+  <path d="M169 166C194 152 226 142 268 137C296 134 319 135 337 141C311 156 274 169 228 177C204 181 184 179 169 166Z" fill="#B46A3D"/>
+  <path d="M171 157C205 138 266 126 332 131" stroke="#E8B46A" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="247" cy="166" r="12" fill="#8B2330"/>
+  <circle cx="275" cy="158" r="14" fill="#A12C3A"/>
+  <circle cx="299" cy="168" r="11" fill="#B53344"/>
+  <ellipse cx="308" cy="135" rx="18" ry="7" transform="rotate(18 308 135)" fill="#88B46D"/>
+  <ellipse cx="226" cy="146" rx="16" ry="6" transform="rotate(-22 226 146)" fill="#7FA865"/>
+</svg>

@@ -1,21 +1,22 @@
+import { getTranslatorServer } from "@/lib/i18n-server";
+
 export default async function AdminSettingsPage() {
+  const { t } = await getTranslatorServer();
+
   return (
     <>
       <section className="hero-panel">
-        <span className="eyebrow">Settings</span>
-        <h1 className="display">Keep tenant setup boring so service operations stay sharp.</h1>
-        <p className="lede">
-          The MVP still assumes a single-location tenant, USD pricing, internal onboarding, and no public customer
-          accounts. This screen is held for future brand and operational defaults.
-        </p>
+        <span className="eyebrow">{t("admin.settings_eyebrow")}</span>
+        <h1 className="display">{t("admin.settings_title")}</h1>
+        <p className="lede">{t("admin.settings_description")}</p>
       </section>
       <section className="content-card stack">
         <div className="tag-row">
-          <span className="tag">Single location</span>
-          <span className="tag">USD default</span>
-          <span className="tag">Internal onboarding</span>
-          <span className="tag">No online payment</span>
-          <span className="tag">No modifiers</span>
+          <span className="tag">{t("admin.tag.single_location")}</span>
+          <span className="tag">{t("admin.tag.usd_default")}</span>
+          <span className="tag">{t("admin.tag.internal_onboarding")}</span>
+          <span className="tag">{t("admin.tag.no_online_payment")}</span>
+          <span className="tag">{t("admin.tag.no_modifiers")}</span>
         </div>
       </section>
     </>

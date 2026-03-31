@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
+import { translateRole } from "@/lib/i18n";
 import { routeForSession } from "@/lib/session-routing";
 import type { AuthSession, UserRole } from "@/lib/types";
 
@@ -17,8 +19,8 @@ interface SessionPanelProps {
 
 export function SessionPanel({
   contextLabel = "this surface",
-  title = "Session",
-  description = "Seeded demo credentials are prefilled to speed up the first run.",
+  title,
+  description,
   defaultEmail = "admin@harbor.local",
   defaultPassword = "ChangeMe123!",
   demoRole = "admin",
@@ -27,6 +29,10 @@ export function SessionPanel({
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState(defaultPassword);
   const [message, setMessage] = useState("");
+  const { locale, t } = useI18n();
+
+  const resolvedTitle = title || t("session.default_title");
+  const resolvedDescription = description || t("session.default_description");
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +55,7 @@ export function SessionPanel({
       } catch {
         if (!cancelled) {
           setSession(null);
-          setMessage("Authentication service unavailable.");
+          setMessage(t("session.auth_unavailable"));
         }
       }
     }
@@ -62,7 +68,7 @@ export function SessionPanel({
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Signing in...");
+    setMessage(t("session.signing_in"));
     try {
       const response = await fetch(`${apiBaseUrl}/auth/login`, {
         method: "POST",
@@ -71,17 +77,19 @@ export function SessionPanel({
         body: JSON.stringify({ email, password }),
       });
       if (!response.ok) {
-        const payload = (await response.json().catch(() => ({ detail: "Login failed" }))) as { detail?: string };
-        setMessage(payload.detail ?? "Login failed");
+        const payload = (await response.json().catch(() => ({ detail: t("session.login_failed") }))) as {
+          detail?: string;
+        };
+        setMessage(payload.detail ?? t("session.login_failed"));
         return;
       }
       const payload = (await response.json()) as AuthSession;
       setSession(payload);
-      setMessage(`Signed in for ${contextLabel}. Redirecting...`);
+      setMessage(t("session.signed_in", { context: contextLabel }));
       window.location.href = routeForSession(payload);
     } catch {
       setSession(null);
-      setMessage("Authentication service unavailable.");
+      setMessage(t("session.auth_unavailable"));
     }
   }
 
@@ -91,39 +99,39 @@ export function SessionPanel({
       credentials: "include",
     }).catch(() => undefined);
     setSession(null);
-    setMessage("Signed out. Redirecting...");
+    setMessage(t("session.signed_out"));
     window.location.href = "/";
   }
 
   return (
     <section className="form-card stack">
       <div>
-        <h3>{title}</h3>
-        <p className="muted">{description}</p>
+        <h3>{resolvedTitle}</h3>
+        <p className="muted">{resolvedDescription}</p>
       </div>
       {session ? (
         <>
           <div className="inline-meta">
             <strong>{session.user.full_name}</strong>
-            <span className={`status-pill ${session.user.role}`}>{session.user.role}</span>
+            <span className={`status-pill ${session.user.role}`}>{translateRole(locale, session.user.role)}</span>
           </div>
           <div className="muted">{session.user.email}</div>
           <button className="ghost-button" onClick={handleLogout} type="button">
-            Sign out
+            {t("common.sign_out")}
           </button>
         </>
       ) : (
         <form className="stack" onSubmit={handleLogin}>
           <label className="field">
-            <span>Email</span>
+            <span>{t("common.email")}</span>
             <input onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
           </label>
           <label className="field">
-            <span>Password</span>
+            <span>{t("common.password")}</span>
             <input onChange={(event) => setPassword(event.target.value)} type="password" value={password} />
           </label>
           <button className="button" type="submit">
-            Sign in
+            {t("common.sign_in")}
           </button>
         </form>
       )}

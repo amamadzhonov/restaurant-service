@@ -65,8 +65,8 @@ class Tenant(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
     address: Mapped[str | None] = mapped_column(Text())
-    timezone: Mapped[str] = mapped_column(String(64), default="America/New_York")
-    currency: Mapped[str] = mapped_column(String(8), default="USD")
+    timezone: Mapped[str] = mapped_column(String(64), default="Asia/Dushanbe")
+    currency: Mapped[str] = mapped_column(String(8), default="TJS")
     subscription_plan: Mapped[str] = mapped_column(String(64), default="starter")
     subscription_status: Mapped[SubscriptionStatus] = mapped_column(
         Enum(SubscriptionStatus),

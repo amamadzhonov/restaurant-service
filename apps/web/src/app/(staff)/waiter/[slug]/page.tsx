@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { SessionPanel } from "@/components/session-panel";
 import { WaiterConsole } from "@/components/staff-console";
 import { getPublicMenu } from "@/lib/api";
+import { getTranslatorServer } from "@/lib/i18n-server";
 import { routeForSession } from "@/lib/session-routing";
 import { getAuthSessionServer, getWaiterOrdersServer, getWaiterTablesServer } from "@/lib/server-api";
 
 export default async function WaiterPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { t } = await getTranslatorServer();
   const { slug } = await params;
   const session = await getAuthSessionServer();
   if (!session) {
@@ -24,29 +26,26 @@ export default async function WaiterPage({ params }: { params: Promise<{ slug: s
   return (
     <main className="app-shell">
       <section className="hero-panel">
-        <span className="eyebrow">Waiter PWA</span>
-        <h1 className="display">Deliver the ready board, assist edits, and close the table.</h1>
-        <p className="lede">
-          Waiters work from the live order list rather than creating every order by hand. The surface is tuned for
-          table service, not admin overhead.
-        </p>
+        <span className="eyebrow">{t("waiter.page_eyebrow")}</span>
+        <h1 className="display">{t("waiter.page_title")}</h1>
+        <p className="lede">{t("waiter.page_description")}</p>
       </section>
       <section className="grid two section">
         <SessionPanel
           contextLabel={`waiter for ${slug}`}
           defaultEmail="waiter@harbor.local"
           demoRole="waiter"
-          title="Waiter session"
+          title={t("waiter.session_title")}
         />
         <div className="content-card stack">
           <div className="inline-meta">
-            <strong>Primary actions</strong>
+            <strong>{t("waiter.primary_actions")}</strong>
           </div>
           <div className="tag-row">
-            <span className="tag">Review ready orders</span>
-            <span className="tag">Assist ticket edits</span>
-            <span className="tag">Mark served</span>
-            <span className="tag">Close after payment</span>
+            <span className="tag">{t("waiter.tag.ready")}</span>
+            <span className="tag">{t("waiter.tag.assist")}</span>
+            <span className="tag">{t("waiter.tag.served")}</span>
+            <span className="tag">{t("waiter.tag.close")}</span>
           </div>
         </div>
       </section>

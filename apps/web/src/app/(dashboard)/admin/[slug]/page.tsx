@@ -6,12 +6,11 @@ import {
   getUsersServer,
   getSubscriptionServer,
 } from "@/lib/server-api";
-
-function formatCurrency(value: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value));
-}
+import { formatCurrencyForLocale, translateStatus } from "@/lib/i18n";
+import { getTranslatorServer } from "@/lib/i18n-server";
 
 export default async function AdminOverviewPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { locale, t } = await getTranslatorServer();
   const { slug } = await params;
   const [menus, summary, orders, devices, subscription, users] = await Promise.all([
     getMenusServer(slug),
@@ -25,29 +24,26 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
   return (
     <>
       <section className="hero-panel">
-        <span className="eyebrow">Operations overview</span>
-        <h1 className="display">Run QR ordering, kitchen flow, and table service from one admin shell.</h1>
-        <p className="lede">
-          The dashboard now centers on operational clarity: what guests are ordering, what the kitchen owes, who is on
-          the floor, and whether the tenant is healthy enough to keep protected access online.
-        </p>
+        <span className="eyebrow">{t("admin.overview_eyebrow")}</span>
+        <h1 className="display">{t("admin.overview_title")}</h1>
+        <p className="lede">{t("admin.overview_description")}</p>
       </section>
 
       <section className="grid three">
         <article className="metric-card">
-          <h3>Orders today</h3>
+          <h3>{t("admin.orders_today")}</h3>
           <div className="metric-value">{summary.orders_today}</div>
-          <p className="muted">Guest and waiter-originated orders created since the start of the day.</p>
+          <p className="muted">{t("admin.orders_today_description")}</p>
         </article>
         <article className="metric-card">
-          <h3>Ready backlog</h3>
+          <h3>{t("admin.ready_backlog")}</h3>
           <div className="metric-value">{summary.ready_backlog}</div>
-          <p className="muted">Orders waiting on the floor to be delivered and marked served.</p>
+          <p className="muted">{t("admin.ready_backlog_description")}</p>
         </article>
         <article className="metric-card">
-          <h3>Gross sales today</h3>
-          <div className="metric-value">{formatCurrency(summary.gross_sales_today)}</div>
-          <p className="muted">Closed tickets only, with payment still handled off-app in v1.</p>
+          <h3>{t("admin.gross_sales_today")}</h3>
+          <div className="metric-value">{formatCurrencyForLocale(locale, summary.gross_sales_today)}</div>
+          <p className="muted">{t("admin.gross_sales_description")}</p>
         </article>
       </section>
 
@@ -55,51 +51,51 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
         <article className="content-card stack">
           <div className="section-header">
             <div>
-              <h2 className="section-title">Tenant health</h2>
-              <p className="section-subtitle">Protected access stays open only while billing and tenant access are healthy.</p>
+              <h2 className="section-title">{t("admin.tenant_health")}</h2>
+              <p className="section-subtitle">{t("admin.tenant_health_description")}</p>
             </div>
           </div>
           <div className="inline-meta">
-            <strong>Subscription</strong>
-            <span className={`status-pill ${subscription.status}`}>{subscription.status}</span>
+            <strong>{t("admin.subscription")}</strong>
+            <span className={`status-pill ${subscription.status}`}>{translateStatus(locale, subscription.status)}</span>
           </div>
           <div className="inline-meta">
-            <strong>Protected access</strong>
+            <strong>{t("admin.protected_access")}</strong>
             <span className={`status-pill ${subscription.is_accessible ? "active" : "cancelled"}`}>
-              {subscription.is_accessible ? "enabled" : "suspended"}
+              {subscription.is_accessible ? t("common.enabled") : t("common.suspended")}
             </span>
           </div>
           <div className="inline-meta">
-            <strong>Tenant users</strong>
-            <span>{users.length} managed users</span>
+            <strong>{t("admin.tenant_users")}</strong>
+            <span>{t("admin.managed_users", { count: users.length })}</span>
           </div>
           <div className="inline-meta">
-            <strong>Devices</strong>
-            <span>{devices.length} registered</span>
+            <strong>{t("platform.header.devices")}</strong>
+            <span>{t("admin.devices_registered", { count: devices.length })}</span>
           </div>
         </article>
 
         <article className="content-card stack">
           <div className="section-header">
             <div>
-              <h2 className="section-title">Current workload</h2>
-              <p className="section-subtitle">A quick read on what the restaurant team is handling right now.</p>
+              <h2 className="section-title">{t("admin.current_workload")}</h2>
+              <p className="section-subtitle">{t("admin.current_workload_description")}</p>
             </div>
           </div>
           <div className="inline-meta">
-            <strong>Open orders</strong>
+            <strong>{t("admin.open_orders")}</strong>
             <span>{summary.active_orders}</span>
           </div>
           <div className="inline-meta">
-            <strong>Active tables</strong>
+            <strong>{t("admin.active_tables")}</strong>
             <span>{summary.active_tables}</span>
           </div>
           <div className="inline-meta">
-            <strong>Menus live</strong>
+            <strong>{t("admin.menus_live")}</strong>
             <span>{menus.length}</span>
           </div>
           <div className="inline-meta">
-            <strong>Tickets visible</strong>
+            <strong>{t("admin.tickets_visible")}</strong>
             <span>{orders.length}</span>
           </div>
         </article>

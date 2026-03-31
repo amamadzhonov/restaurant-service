@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { DecorativeBackdrop } from "@/components/decorative-backdrop";
 import { getPublicOrderStatus } from "@/lib/api";
+import { formatCurrencyForLocale, translateStatus } from "@/lib/i18n";
+import { getTranslatorServer } from "@/lib/i18n-server";
 import type { OrderStatus } from "@/lib/types";
 
 const STEPS = ["placed", "preparing", "ready", "served"] as const;
@@ -13,25 +16,23 @@ const STEP_INDEX: Record<OrderStatus, number> = {
   cancelled: 0,
 };
 
-function formatCurrency(value: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value));
-}
-
 export default async function PublicOrderStatusPage({
   params,
 }: {
   params: Promise<{ slug: string; publicStatusToken: string }>;
 }) {
+  const { locale, t } = await getTranslatorServer();
   const { slug, publicStatusToken } = await params;
   const order = await getPublicOrderStatus(publicStatusToken);
 
   if (!order) {
     return (
-      <main className="app-shell">
-        <section className="hero-panel">
-          <span className="eyebrow">Order status</span>
-          <h1 className="display">Order not found</h1>
-          <p className="lede">The status token is missing or expired.</p>
+      <main className="app-shell public-scene-shell public-scene-shell--status">
+        <DecorativeBackdrop preset="public_status" />
+        <section className="hero-panel public-hero reveal-panel reveal-1">
+          <span className="eyebrow">{t("public_status.eyebrow")}</span>
+          <h1 className="display">{t("public_status.not_found_title")}</h1>
+          <p className="lede">{t("public_status.not_found_description")}</p>
         </section>
       </main>
     );
@@ -40,36 +41,40 @@ export default async function PublicOrderStatusPage({
   const activeStepIndex = STEP_INDEX[order.status];
 
   return (
-    <main className="app-shell">
-      <section className="hero-panel">
-        <span className="eyebrow">Order tracking</span>
+    <main className="app-shell public-scene-shell public-scene-shell--status">
+      <DecorativeBackdrop preset="public_status" />
+      <section className="hero-panel public-hero reveal-panel reveal-1">
+        <span className="eyebrow">{t("public_status.eyebrow")}</span>
         <h1 className="display">
-          Table {order.table_number}
+          {t("common.table", { table: order.table_number })}
           {order.guest_name ? ` · ${order.guest_name}` : ""}
         </h1>
-        <p className="lede">Your order is live in the restaurant workflow. Kitchen and wait staff will update it as service moves.</p>
+        <p className="lede">{t("public_status.description")}</p>
         <div className="table-banner">
-          <strong>{order.status}</strong>
-          <span className="muted">{formatCurrency(order.total_price)}</span>
+          <strong>{translateStatus(locale, order.status)}</strong>
+          <span className="muted">{formatCurrencyForLocale(locale, order.total_price)}</span>
         </div>
         <div className="timeline-row section">
           {STEPS.map((step, index) => (
-            <div className={`timeline-step ${index <= activeStepIndex ? "done" : ""}`} key={step}>
+            <div
+              className={`timeline-step ${index <= activeStepIndex ? "done" : ""} ${index === activeStepIndex ? "current" : ""}`}
+              key={step}
+            >
               <span>{index + 1}</span>
-              <strong>{step}</strong>
+              <strong>{translateStatus(locale, step)}</strong>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="content-card stack section">
+      <section className="content-card stack section reveal-panel reveal-2">
         <div className="section-header">
           <div>
-            <h2 className="section-title">Ticket details</h2>
-            <p className="section-subtitle">{order.notes ?? "No special note on this order."}</p>
+            <h2 className="section-title">{t("public_status.ticket_title")}</h2>
+            <p className="section-subtitle">{order.notes ?? t("public_status.no_special_note")}</p>
           </div>
           <Link className="ghost-button" href={`/r/${slug}`}>
-            Back to menu
+            {t("common.back_to_menu")}
           </Link>
         </div>
         <div className="tag-row">

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
+import { translateRole, translateStatus } from "@/lib/i18n";
 import type { StaffAccountRecord } from "@/lib/types";
 
 type ManagedRole = StaffAccountRecord["role"];
@@ -22,10 +24,11 @@ export function StaffManager({
     role: "waiter" as ManagedRole,
   });
   const [message, setMessage] = useState("");
+  const { locale, t } = useI18n();
 
   async function createStaff(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Creating user...");
+    setMessage(t("staff.creating"));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/users`, {
         method: "POST",
@@ -34,7 +37,7 @@ export function StaffManager({
         body: JSON.stringify({ ...form, is_active: true }),
       });
       if (!response.ok) {
-        setMessage("User creation failed.");
+        setMessage(t("staff.create_failed"));
         return;
       }
       const created = (await response.json()) as StaffAccountRecord;
@@ -45,14 +48,14 @@ export function StaffManager({
         password: "ChangeMe123!",
         role: "waiter",
       });
-      setMessage("User created.");
+      setMessage(t("staff.created"));
     } catch {
-      setMessage("Backend unavailable. User management needs the API.");
+      setMessage(t("staff.backend_unavailable"));
     }
   }
 
   async function patchUser(user: StaffAccountRecord, updates: Partial<StaffAccountRecord>) {
-    setMessage(`Updating ${user.full_name}...`);
+    setMessage(t("staff.updating", { name: user.full_name }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/users/${user.id}`, {
         method: "PUT",
@@ -61,32 +64,32 @@ export function StaffManager({
         body: JSON.stringify(updates),
       });
       if (!response.ok) {
-        setMessage("User update failed.");
+        setMessage(t("staff.update_failed"));
         return;
       }
       const updated = (await response.json()) as StaffAccountRecord;
       setStaff((current) => current.map((member) => (member.id === updated.id ? updated : member)));
-      setMessage("User updated.");
+      setMessage(t("staff.updated"));
     } catch {
-      setMessage("Backend unavailable. User management needs the API.");
+      setMessage(t("staff.backend_unavailable"));
     }
   }
 
   async function deleteUser(user: StaffAccountRecord) {
-    setMessage(`Removing ${user.full_name}...`);
+    setMessage(t("staff.removing", { name: user.full_name }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/users/${user.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!response.ok) {
-        setMessage("User removal failed.");
+        setMessage(t("staff.remove_failed"));
         return;
       }
       setStaff((current) => current.filter((member) => member.id !== user.id));
-      setMessage("User removed.");
+      setMessage(t("staff.removed"));
     } catch {
-      setMessage("Backend unavailable. User management needs the API.");
+      setMessage(t("staff.backend_unavailable"));
     }
   }
 
@@ -94,19 +97,19 @@ export function StaffManager({
     <div className="stack">
       <form className="form-card stack" onSubmit={createStaff}>
         <div>
-          <h3>Add a user</h3>
-          <p className="muted">Restaurant admins can manage admin, waiter, and kitchen accounts inside their own tenant.</p>
+          <h3>{t("staff.add_user")}</h3>
+          <p className="muted">{t("staff.add_user_description")}</p>
         </div>
         <div className="grid two">
           <label className="field">
-            <span>Full name</span>
+            <span>{t("staff.full_name")}</span>
             <input
               onChange={(event) => setForm((current) => ({ ...current, full_name: event.target.value }))}
               value={form.full_name}
             />
           </label>
           <label className="field">
-            <span>Email</span>
+            <span>{t("common.email")}</span>
             <input
               onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
               type="email"
@@ -114,7 +117,7 @@ export function StaffManager({
             />
           </label>
           <label className="field">
-            <span>Password</span>
+            <span>{t("common.password")}</span>
             <input
               onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
               type="password"
@@ -122,19 +125,19 @@ export function StaffManager({
             />
           </label>
           <label className="field">
-            <span>Role</span>
+            <span>{t("admin.users_eyebrow")}</span>
             <select
               onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as ManagedRole }))}
               value={form.role}
             >
-              <option value="admin">Admin</option>
-              <option value="waiter">Waiter</option>
-              <option value="kitchen">Kitchen</option>
+              <option value="admin">{translateRole(locale, "admin")}</option>
+              <option value="waiter">{translateRole(locale, "waiter")}</option>
+              <option value="kitchen">{translateRole(locale, "kitchen")}</option>
             </select>
           </label>
         </div>
         <button className="button" type="submit">
-          Create user
+          {t("staff.create_user")}
         </button>
         {message ? <div className="muted">{message}</div> : null}
       </form>
@@ -145,27 +148,27 @@ export function StaffManager({
             <div className="inline-meta">
               <strong>{member.full_name}</strong>
               <span className={`status-pill ${member.is_active ? "active" : "cancelled"}`}>
-                {member.is_active ? "active" : "inactive"}
+                {translateStatus(locale, member.is_active ? "active" : "inactive")}
               </span>
             </div>
             <div className="muted">{member.email}</div>
             <label className="field">
-              <span>Role</span>
+              <span>{t("admin.users_eyebrow")}</span>
               <select
                 onChange={(event) => patchUser(member, { role: event.target.value as ManagedRole })}
                 value={member.role}
               >
-                <option value="admin">Admin</option>
-                <option value="waiter">Waiter</option>
-                <option value="kitchen">Kitchen</option>
+                <option value="admin">{translateRole(locale, "admin")}</option>
+                <option value="waiter">{translateRole(locale, "waiter")}</option>
+                <option value="kitchen">{translateRole(locale, "kitchen")}</option>
               </select>
             </label>
             <div className="chip-row">
               <button className="ghost-button" onClick={() => patchUser(member, { is_active: !member.is_active })} type="button">
-                {member.is_active ? "Disable" : "Enable"}
+                {member.is_active ? t("staff.disable") : t("staff.enable")}
               </button>
               <button className="ghost-button" onClick={() => deleteUser(member)} type="button">
-                Remove
+                {t("staff.remove")}
               </button>
             </div>
           </article>

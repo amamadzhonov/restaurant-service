@@ -1,0 +1,36 @@
+<svg width="640" height="480" viewBox="0 0 640 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="plateA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(206 236) rotate(90) scale(118 118)">
+      <stop stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#EDE1D0"/>
+    </radialGradient>
+    <radialGradient id="plateB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(426 202) rotate(90) scale(108 108)">
+      <stop stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#E9DDCD"/>
+    </radialGradient>
+    <linearGradient id="napkin" x1="94" y1="126" x2="228" y2="334" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18435A"/>
+      <stop offset="1" stop-color="#0F2534"/>
+    </linearGradient>
+  </defs>
+  <path d="M84 140L178 106L246 242L152 274L84 140Z" fill="url(#napkin)" fill-opacity="0.86"/>
+  <circle cx="206" cy="236" r="114" fill="url(#plateA)"/>
+  <circle cx="206" cy="236" r="86" fill="#FFF6EA"/>
+  <circle cx="426" cy="202" r="104" fill="url(#plateB)"/>
+  <circle cx="426" cy="202" r="78" fill="#FFF7EC"/>
+  <path d="M164 245C179 205 226 190 265 208C287 219 298 239 296 261C294 289 266 311 227 316C188 322 152 305 143 278C140 267 147 257 164 245Z" fill="#D86B47"/>
+  <path d="M392 194C410 162 455 152 490 172C508 182 518 198 518 216C517 241 495 260 460 266C423 273 389 262 374 240C363 224 368 210 392 194Z" fill="#E2A14F"/>
+  <circle cx="526" cy="122" r="34" fill="#F2B44F"/>
+  <circle cx="526" cy="122" r="24" fill="#FFF3C9"/>
+  <path d="M526 98V146" stroke="#F0B43B" stroke-width="3"/>
+  <path d="M502 122H550" stroke="#F0B43B" stroke-width="3"/>
+  <path d="M510 106L542 138" stroke="#F0B43B" stroke-width="3"/>
+  <path d="M510 138L542 106" stroke="#F0B43B" stroke-width="3"/>
+  <path d="M548 92L596 176" stroke="#5A7B95" stroke-width="8" stroke-linecap="round"/>
+  <rect x="86" y="320" width="468" height="20" rx="10" fill="#E2D3C3"/>
+  <rect x="122" y="108" width="12" height="218" rx="6" fill="#D8C9B6"/>
+  <rect x="148" y="108" width="12" height="218" rx="6" fill="#D8C9B6"/>
+  <rect x="472" y="106" width="12" height="220" rx="6" fill="#D8C9B6"/>
+  <circle cx="462" cy="274" r="8" fill="#88B46D"/>
+  <circle cx="244" cy="178" r="7" fill="#88B46D"/>
+</svg>

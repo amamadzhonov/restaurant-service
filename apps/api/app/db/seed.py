@@ -73,7 +73,8 @@ async def seed_demo_data(db: AsyncSession) -> None:
             name="Harbor Bistro",
             slug=demo_slug,
             address="12 River Walk, Brooklyn, NY",
-            timezone="America/New_York",
+            timezone="Asia/Dushanbe",
+            currency="TJS",
             hero_title="Scan, order, and keep service moving",
             hero_subtitle="Guest QR ordering up front, kitchen tickets in motion, and waiters closing the table.",
             primary_color="#B24C2B",
@@ -89,7 +90,8 @@ async def seed_demo_data(db: AsyncSession) -> None:
         tenant.address = "12 River Walk, Brooklyn, NY"
         tenant.hero_title = "Scan, order, and keep service moving"
         tenant.hero_subtitle = "Guest QR ordering up front, kitchen tickets in motion, and waiters closing the table."
-        tenant.timezone = "America/New_York"
+        tenant.timezone = "Asia/Dushanbe"
+        tenant.currency = "TJS"
         tenant.primary_color = "#B24C2B"
         tenant.accent_color = "#183B4E"
         tenant.subscription_plan = "starter"
@@ -354,7 +356,7 @@ async def seed_demo_data(db: AsyncSession) -> None:
                 name=tenant_seed["name"],
                 slug=tenant_seed["slug"],
                 address=tenant_seed["address"],
-                timezone="America/New_York",
+                timezone="Asia/Dushanbe",
                 subscription_plan=tenant_seed["subscription_plan"],
                 subscription_status=tenant_seed["subscription_status"],
                 is_accessible=tenant_seed["is_accessible"],
@@ -368,7 +370,7 @@ async def seed_demo_data(db: AsyncSession) -> None:
         else:
             extra_tenant.name = tenant_seed["name"]
             extra_tenant.address = tenant_seed["address"]
-            extra_tenant.timezone = "America/New_York"
+            extra_tenant.timezone = "Asia/Dushanbe"
             extra_tenant.subscription_plan = tenant_seed["subscription_plan"]
             extra_tenant.subscription_status = tenant_seed["subscription_status"]
             extra_tenant.is_accessible = tenant_seed["is_accessible"]

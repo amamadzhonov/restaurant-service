@@ -1,9 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
+import { formatCurrencyForLocale, translateTag } from "@/lib/i18n";
 import type { MenuItemRecord, MenuRecord, MenuSectionRecord } from "@/lib/types";
+
+const COMMON_TAG_SUGGESTIONS = ["vegetarian", "vegan", "spicy", "seafood", "dessert", "signature", "gluten_free"];
 
 function groupItemsBySection(items: MenuItemRecord[]) {
   return items.reduce<Record<string, MenuItemRecord[]>>((acc, item) => {
@@ -23,10 +27,13 @@ export function MenuStudio({
   sections: MenuSectionRecord[];
   items: MenuItemRecord[];
 }) {
+  const { locale, t } = useI18n();
+  const defaultMenuName = t("menu_studio.default_menu_name");
+  const fileInputId = useId();
   const [menus, setMenus] = useState(initialMenus);
   const [sections, setSections] = useState(initialSections);
   const [items, setItems] = useState(initialItems);
-  const [menuName, setMenuName] = useState(initialMenus[0]?.name ?? "All Day Menu");
+  const [menuName, setMenuName] = useState(initialMenus[0]?.name ?? defaultMenuName);
   const [sectionState, setSectionState] = useState({
     id: "",
     menu_id: initialMenus[0]?.id ?? "",
@@ -39,16 +46,42 @@ export function MenuStudio({
     name: "",
     description: "",
     price: "18.00",
-    tags: "vegetarian",
+    tags: "",
     image_url: "",
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [feedback, setFeedback] = useState("");
   const itemsBySection = useMemo(() => groupItemsBySection(items), [items]);
+  const activeTags = useMemo(
+    () =>
+      new Set(
+        itemState.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      ),
+    [itemState.tags],
+  );
+
+  function addSuggestedTag(tag: string) {
+    setItemState((current) => {
+      const nextTags = current.tags
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+      if (nextTags.includes(tag)) {
+        return current;
+      }
+      return {
+        ...current,
+        tags: [...nextTags, tag].join(", "),
+      };
+    });
+  }
 
   async function createMenu(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFeedback("Creating menu...");
+    setFeedback(t("menu_studio.creating_menu"));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/menus`, {
         method: "POST",
@@ -57,22 +90,22 @@ export function MenuStudio({
         body: JSON.stringify({ name: menuName, is_active: true }),
       });
       if (!response.ok) {
-        setFeedback("Menu creation failed.");
+        setFeedback(t("menu_studio.menu_create_failed"));
         return;
       }
       const created = (await response.json()) as MenuRecord;
       setMenus((current) => [created, ...current]);
       setSectionState((current) => ({ ...current, menu_id: created.id }));
       setItemState((current) => ({ ...current, menu_id: created.id }));
-      setFeedback("Menu created.");
+      setFeedback(t("menu_studio.menu_created"));
     } catch {
-      setFeedback("Backend unavailable. Using demo data preview.");
+      setFeedback(t("menu_studio.backend_preview"));
     }
   }
 
   async function saveSection(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFeedback(sectionState.id ? "Updating section..." : "Creating section...");
+    setFeedback(sectionState.id ? t("menu_studio.updating_section") : t("menu_studio.creating_section"));
     try {
       const response = await fetch(
         sectionState.id
@@ -93,7 +126,7 @@ export function MenuStudio({
         },
       );
       if (!response.ok) {
-        setFeedback("Section save failed.");
+        setFeedback(t("menu_studio.section_save_failed"));
         return;
       }
       const saved = (await response.json()) as MenuSectionRecord;
@@ -103,34 +136,34 @@ export function MenuStudio({
           : [...current, saved].sort((a, b) => a.display_order - b.display_order),
       );
       setSectionState({ id: "", menu_id: sectionState.menu_id, name: "" });
-      setFeedback(sectionState.id ? "Section updated." : "Section created.");
+      setFeedback(sectionState.id ? t("menu_studio.section_updated") : t("menu_studio.section_created"));
     } catch {
-      setFeedback("Backend unavailable. Using demo data preview.");
+      setFeedback(t("menu_studio.backend_preview"));
     }
   }
 
   async function deleteSection(section: MenuSectionRecord) {
-    setFeedback(`Removing ${section.name}...`);
+    setFeedback(t("menu_studio.removing_section", { name: section.name }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/menu-sections/${section.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!response.ok) {
-        setFeedback("Section removal failed.");
+        setFeedback(t("menu_studio.section_remove_failed"));
         return;
       }
       setSections((current) => current.filter((entry) => entry.id !== section.id));
       setItems((current) => current.filter((item) => item.section_id !== section.id));
-      setFeedback("Section removed.");
+      setFeedback(t("menu_studio.section_removed"));
     } catch {
-      setFeedback("Backend unavailable. Menu management needs the API.");
+      setFeedback(t("menu_studio.backend_required"));
     }
   }
 
   async function saveItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFeedback(itemState.id ? "Updating item..." : "Creating item...");
+    setFeedback(itemState.id ? t("menu_studio.updating_item") : t("menu_studio.creating_item"));
     try {
       const existingItem = items.find((item) => item.id === itemState.id);
       const payload = itemState.id
@@ -174,7 +207,7 @@ export function MenuStudio({
         },
       );
       if (!response.ok) {
-        setFeedback("Item save failed.");
+        setFeedback(t("menu_studio.item_save_failed"));
         return;
       }
       let saved = (await response.json()) as MenuItemRecord;
@@ -207,51 +240,51 @@ export function MenuStudio({
         image_url: "",
       });
       setSelectedImage(null);
-      setFeedback(itemState.id ? "Item updated." : "Item created.");
+      setFeedback(itemState.id ? t("menu_studio.item_updated") : t("menu_studio.item_created"));
     } catch {
-      setFeedback("Backend unavailable. Using demo data preview.");
+      setFeedback(t("menu_studio.backend_preview"));
     }
   }
 
   async function deleteItem(item: MenuItemRecord) {
-    setFeedback(`Removing ${item.name}...`);
+    setFeedback(t("menu_studio.removing_item", { name: item.name }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/menu-items/${item.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!response.ok) {
-        setFeedback("Item removal failed.");
+        setFeedback(t("menu_studio.item_remove_failed"));
         return;
       }
       setItems((current) => current.filter((entry) => entry.id !== item.id));
-      setFeedback("Item removed.");
+      setFeedback(t("menu_studio.item_removed"));
     } catch {
-      setFeedback("Backend unavailable. Menu management needs the API.");
+      setFeedback(t("menu_studio.backend_required"));
     }
   }
 
   async function removeImage(item: MenuItemRecord) {
-    setFeedback(`Removing image for ${item.name}...`);
+    setFeedback(t("menu_studio.removing_image", { name: item.name }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/menu-items/${item.id}/image`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!response.ok) {
-        setFeedback("Image removal failed.");
+        setFeedback(t("menu_studio.image_remove_failed"));
         return;
       }
       const updated = (await response.json()) as MenuItemRecord;
       setItems((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
-      setFeedback("Image removed.");
+      setFeedback(t("menu_studio.image_removed"));
     } catch {
-      setFeedback("Backend unavailable. Menu management needs the API.");
+      setFeedback(t("menu_studio.backend_required"));
     }
   }
 
   async function toggleItem(item: MenuItemRecord) {
-    setFeedback(`Updating ${item.name}...`);
+    setFeedback(t("menu_studio.updating_item"));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/menu-items/${item.id}`, {
         method: "PUT",
@@ -260,14 +293,14 @@ export function MenuStudio({
         body: JSON.stringify({ is_available: !item.is_available }),
       });
       if (!response.ok) {
-        setFeedback("Item update failed.");
+        setFeedback(t("menu_studio.item_save_failed"));
         return;
       }
       const updated = (await response.json()) as MenuItemRecord;
       setItems((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
-      setFeedback("Item updated.");
+      setFeedback(t("menu_studio.item_updated"));
     } catch {
-      setFeedback("Backend unavailable. Using demo data preview.");
+      setFeedback(t("menu_studio.backend_preview"));
     }
   }
 
@@ -294,25 +327,25 @@ export function MenuStudio({
       <section className="grid two">
         <form className="form-card stack" onSubmit={createMenu}>
           <div>
-            <h3>Create menu</h3>
-            <p className="muted">Keep menu collections explicit so QR, waiter, and kitchen flows stay predictable.</p>
+            <h3>{t("menu_studio.create_menu_title")}</h3>
+            <p className="muted">{t("menu_studio.create_menu_description")}</p>
           </div>
           <label className="field">
-            <span>Menu name</span>
+            <span>{t("menu_studio.menu_name")}</span>
             <input onChange={(event) => setMenuName(event.target.value)} value={menuName} />
           </label>
           <button className="button" type="submit">
-            Save menu
+            {t("menu_studio.save_menu")}
           </button>
         </form>
 
         <form className="form-card stack" onSubmit={saveSection}>
           <div>
-            <h3>{sectionState.id ? "Update section" : "Create section"}</h3>
-            <p className="muted">Sections keep the QR menu scannable and the waiter workflow organized.</p>
+            <h3>{sectionState.id ? t("menu_studio.update_section_title") : t("menu_studio.create_section_title")}</h3>
+            <p className="muted">{t("menu_studio.section_description")}</p>
           </div>
           <label className="field">
-            <span>Attach to menu</span>
+            <span>{t("menu_studio.attach_to_menu")}</span>
             <select
               onChange={(event) => setSectionState((current) => ({ ...current, menu_id: event.target.value }))}
               value={sectionState.menu_id}
@@ -325,7 +358,7 @@ export function MenuStudio({
             </select>
           </label>
           <label className="field">
-            <span>Section name</span>
+            <span>{t("menu_studio.section_name")}</span>
             <input
               onChange={(event) => setSectionState((current) => ({ ...current, name: event.target.value }))}
               value={sectionState.name}
@@ -333,7 +366,7 @@ export function MenuStudio({
           </label>
           <div className="chip-row">
             <button className="button" type="submit">
-              {sectionState.id ? "Update section" : "Save section"}
+              {sectionState.id ? t("menu_studio.update_section") : t("menu_studio.save_section")}
             </button>
             {sectionState.id ? (
               <button
@@ -341,7 +374,7 @@ export function MenuStudio({
                 onClick={() => setSectionState({ id: "", menu_id: menus[0]?.id ?? "", name: "" })}
                 type="button"
               >
-                Cancel
+                {t("menu_studio.cancel")}
               </button>
             ) : null}
           </div>
@@ -350,12 +383,12 @@ export function MenuStudio({
 
       <form className="form-card stack" onSubmit={saveItem}>
         <div>
-          <h3>{itemState.id ? "Update item" : "Create item"}</h3>
-          <p className="muted">Tags, availability, and item photos stay first-class in the admin workflow.</p>
+          <h3>{itemState.id ? t("menu_studio.update_item_title") : t("menu_studio.create_item_title")}</h3>
+          <p className="muted">{t("menu_studio.item_description")}</p>
         </div>
         <div className="grid two">
           <label className="field">
-            <span>Menu</span>
+            <span>{t("menu_studio.menu_label")}</span>
             <select
               onChange={(event) => setItemState((current) => ({ ...current, menu_id: event.target.value }))}
               value={itemState.menu_id}
@@ -368,7 +401,7 @@ export function MenuStudio({
             </select>
           </label>
           <label className="field">
-            <span>Section</span>
+            <span>{t("menu_studio.section_label")}</span>
             <select
               onChange={(event) => setItemState((current) => ({ ...current, section_id: event.target.value }))}
               value={itemState.section_id}
@@ -381,14 +414,14 @@ export function MenuStudio({
             </select>
           </label>
           <label className="field">
-            <span>Name</span>
+            <span>{t("menu_studio.item_name")}</span>
             <input
               onChange={(event) => setItemState((current) => ({ ...current, name: event.target.value }))}
               value={itemState.name}
             />
           </label>
           <label className="field">
-            <span>Price</span>
+            <span>{t("menu_studio.item_price")}</span>
             <input
               onChange={(event) => setItemState((current) => ({ ...current, price: event.target.value }))}
               value={itemState.price}
@@ -396,7 +429,7 @@ export function MenuStudio({
           </label>
         </div>
         <label className="field">
-          <span>Description</span>
+          <span>{t("menu_studio.item_description_label")}</span>
           <textarea
             onChange={(event) => setItemState((current) => ({ ...current, description: event.target.value }))}
             rows={3}
@@ -405,25 +438,60 @@ export function MenuStudio({
         </label>
         <div className="grid two">
           <label className="field">
-            <span>Tags</span>
+            <span>{t("menu_studio.item_tags")}</span>
             <input
               onChange={(event) => setItemState((current) => ({ ...current, tags: event.target.value }))}
+              placeholder={t("menu_studio.item_tags_placeholder")}
               value={itemState.tags}
             />
+            <span className="field-hint">{t("menu_studio.item_tags_hint")}</span>
+            <div className="chip-row">
+              {COMMON_TAG_SUGGESTIONS.map((tag) => (
+                <button
+                  aria-pressed={activeTags.has(tag)}
+                  className={activeTags.has(tag) ? "ghost-button active-tag-button" : "ghost-button"}
+                  key={tag}
+                  onClick={() => addSuggestedTag(tag)}
+                  type="button"
+                >
+                  {translateTag(locale, tag)}
+                </button>
+              ))}
+            </div>
           </label>
           <label className="field">
-            <span>Image upload</span>
+            <span>{t("menu_studio.image_upload")}</span>
             <input
               accept="image/*"
+              className="sr-only"
+              id={fileInputId}
               onChange={(event) => setSelectedImage(event.target.files?.[0] ?? null)}
               type="file"
             />
+            <div className="file-picker-row">
+              <label className="ghost-button" htmlFor={fileInputId}>
+                {t("menu_studio.choose_image")}
+              </label>
+              <span className="field-hint">
+                {selectedImage
+                  ? t("menu_studio.selected_image", { name: selectedImage.name })
+                  : itemState.image_url
+                    ? t("menu_studio.current_image_attached")
+                    : t("menu_studio.no_image_selected")}
+              </span>
+            </div>
           </label>
         </div>
-        {itemState.image_url ? <img alt={itemState.name || "Item preview"} className="menu-item-image preview-image" src={itemState.image_url} /> : null}
+        {itemState.image_url ? (
+          <img
+            alt={itemState.name || t("menu_studio.item_preview")}
+            className="menu-item-image preview-image"
+            src={itemState.image_url}
+          />
+        ) : null}
         <div className="chip-row">
           <button className="button" type="submit">
-            {itemState.id ? "Update item" : "Save item"}
+            {itemState.id ? t("menu_studio.update_item") : t("menu_studio.save_item")}
           </button>
           {itemState.id ? (
             <button
@@ -442,7 +510,7 @@ export function MenuStudio({
               }
               type="button"
             >
-              New item form
+              {t("menu_studio.new_item_form")}
             </button>
           ) : null}
         </div>
@@ -451,8 +519,8 @@ export function MenuStudio({
       <section className="content-card stack">
         <div className="section-header">
           <div>
-            <h2 className="section-title">Current catalog</h2>
-            <p className="section-subtitle">Edit, remove, upload photos, and toggle availability from one surface.</p>
+            <h2 className="section-title">{t("menu_studio.current_catalog")}</h2>
+            <p className="section-subtitle">{t("menu_studio.current_catalog_description")}</p>
           </div>
         </div>
         {sections.map((section) => (
@@ -460,14 +528,14 @@ export function MenuStudio({
             <div className="section-header" style={{ marginBottom: 12 }}>
               <div>
                 <strong>{section.name}</strong>
-                <div className="muted">Display order {section.display_order}</div>
+                <div className="muted">{t("menu_studio.display_order", { order: section.display_order })}</div>
               </div>
               <div className="chip-row">
                 <button className="ghost-button" onClick={() => startEditingSection(section)} type="button">
-                  Edit section
+                  {t("menu_studio.edit_section")}
                 </button>
                 <button className="ghost-button" onClick={() => deleteSection(section)} type="button">
-                  Delete section
+                  {t("menu_studio.delete_section")}
                 </button>
               </div>
             </div>
@@ -477,30 +545,30 @@ export function MenuStudio({
                   {item.image_url ? <img alt={item.name} className="menu-item-image" src={item.image_url} /> : null}
                   <div className="inline-meta">
                     <span className={`status-pill ${item.is_available ? "active" : "past_due"}`}>
-                      {item.is_available ? "available" : "unavailable"}
+                      {item.is_available ? t("common.available") : t("common.unavailable")}
                     </span>
                     {item.tags.map((tag) => (
                       <span className="tag" key={tag}>
-                        {tag}
+                        {translateTag(locale, tag)}
                       </span>
                     ))}
                   </div>
                   <h3>{item.name}</h3>
                   <p className="muted">{item.description}</p>
-                  <div className="price">${item.price}</div>
+                  <div className="price">{formatCurrencyForLocale(locale, item.price)}</div>
                   <div className="chip-row">
                     <button className="ghost-button" onClick={() => startEditingItem(item)} type="button">
-                      Edit item
+                      {t("menu_studio.edit_item")}
                     </button>
                     <button className="ghost-button" onClick={() => toggleItem(item)} type="button">
-                      Toggle availability
+                      {t("menu_studio.toggle_availability")}
                     </button>
                     <button className="ghost-button" onClick={() => deleteItem(item)} type="button">
-                      Delete item
+                      {t("menu_studio.delete_item")}
                     </button>
                     {item.image_url ? (
                       <button className="ghost-button" onClick={() => removeImage(item)} type="button">
-                        Remove image
+                        {t("menu_studio.remove_image")}
                       </button>
                     ) : null}
                   </div>

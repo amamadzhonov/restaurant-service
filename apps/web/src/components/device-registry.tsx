@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { useI18n } from "@/components/locale-provider";
 import { apiBaseUrl } from "@/lib/api";
+import { translatePlatform, translateStatus } from "@/lib/i18n";
 import type { DeviceRecord, TableRecord } from "@/lib/types";
 
 export function DeviceRegistry({
@@ -19,10 +21,11 @@ export function DeviceRegistry({
   const [platform, setPlatform] = useState("pwa");
   const [assignedTableId, setAssignedTableId] = useState(tables[0]?.id ?? "");
   const [message, setMessage] = useState("");
+  const { locale, t } = useI18n();
 
   async function createDevice(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Registering device...");
+    setMessage(t("devices.registering"));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/devices`, {
         method: "POST",
@@ -36,21 +39,21 @@ export function DeviceRegistry({
         }),
       });
       if (!response.ok) {
-        setMessage("Device registration failed.");
+        setMessage(t("devices.register_failed"));
         return;
       }
       const created = (await response.json()) as DeviceRecord;
       setDevices((current) => [created, ...current]);
       setLabel("");
       setAssignedTableId("");
-      setMessage("Device registered.");
+      setMessage(t("devices.registered"));
     } catch {
-      setMessage("Backend unavailable. Using demo data preview.");
+      setMessage(t("devices.backend_unavailable"));
     }
   }
 
   async function updateStatus(device: DeviceRecord, status: DeviceRecord["status"]) {
-    setMessage(`Updating ${device.label}...`);
+    setMessage(t("devices.updating", { name: device.label }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/devices/${device.id}`, {
         method: "PUT",
@@ -59,32 +62,32 @@ export function DeviceRegistry({
         body: JSON.stringify({ status }),
       });
       if (!response.ok) {
-        setMessage("Device update failed.");
+        setMessage(t("devices.update_failed"));
         return;
       }
       const updated = (await response.json()) as DeviceRecord;
       setDevices((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
-      setMessage("Device updated.");
+      setMessage(t("devices.updated"));
     } catch {
-      setMessage("Backend unavailable. Using demo data preview.");
+      setMessage(t("devices.backend_unavailable"));
     }
   }
 
   async function deleteDevice(device: DeviceRecord) {
-    setMessage(`Removing ${device.label}...`);
+    setMessage(t("devices.removing", { name: device.label }));
     try {
       const response = await fetch(`${apiBaseUrl}/admin/${slug}/devices/${device.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!response.ok) {
-        setMessage("Device removal failed.");
+        setMessage(t("devices.remove_failed"));
         return;
       }
       setDevices((current) => current.filter((entry) => entry.id !== device.id));
-      setMessage("Device removed.");
+      setMessage(t("devices.removed"));
     } catch {
-      setMessage("Backend unavailable. Device actions need the API.");
+      setMessage(t("devices.backend_unavailable"));
     }
   }
 
@@ -92,16 +95,16 @@ export function DeviceRegistry({
     <div className="stack">
       <form className="form-card stack" onSubmit={createDevice}>
         <div>
-          <h3>Register device</h3>
-          <p className="muted">Treat tablets as assigned restaurant assets, not a heavy MDM project.</p>
+          <h3>{t("devices.register_title")}</h3>
+          <p className="muted">{t("devices.register_description")}</p>
         </div>
         <div className="grid two">
           <label className="field">
-            <span>Label</span>
+            <span>{t("devices.label")}</span>
             <input onChange={(event) => setLabel(event.target.value)} value={label} />
           </label>
           <label className="field">
-            <span>Platform</span>
+            <span>{t("devices.platform")}</span>
             <select onChange={(event) => setPlatform(event.target.value)} value={platform}>
               <option value="pwa">PWA</option>
               <option value="android">Android</option>
@@ -110,18 +113,18 @@ export function DeviceRegistry({
           </label>
         </div>
         <label className="field">
-          <span>Assigned table</span>
+          <span>{t("devices.assigned_table")}</span>
           <select onChange={(event) => setAssignedTableId(event.target.value)} value={assignedTableId}>
-            <option value="">Unassigned</option>
+            <option value="">{t("devices.unassigned")}</option>
             {tables.map((table) => (
               <option key={table.id} value={table.id}>
-                Table {table.table_number}
+                {t("common.table", { table: table.table_number })}
               </option>
             ))}
           </select>
         </label>
         <button className="button" type="submit">
-          Save device
+          {t("devices.save")}
         </button>
         {message ? <div className="muted">{message}</div> : null}
       </form>
@@ -131,20 +134,23 @@ export function DeviceRegistry({
           <article className="content-card stack" key={device.id}>
             <div className="inline-meta">
               <strong>{device.label}</strong>
-              <span className={`status-pill ${device.status}`}>{device.status}</span>
+              <span className={`status-pill ${device.status}`}>{translateStatus(locale, device.status)}</span>
             </div>
             <div className="muted">
-              {device.platform} · {device.assigned_table_id ? `Assigned to ${device.assigned_table_id}` : "Unassigned"}
+              {translatePlatform(device.platform)} ·{" "}
+              {device.assigned_table_id
+                ? t("devices.assigned_to", { table: device.assigned_table_id })
+                : t("devices.unassigned")}
             </div>
             <div className="chip-row">
               <button className="ghost-button" onClick={() => updateStatus(device, "active")} type="button">
-                Mark active
+                {t("devices.mark_active")}
               </button>
               <button className="ghost-button" onClick={() => updateStatus(device, "inactive")} type="button">
-                Mark inactive
+                {t("devices.mark_inactive")}
               </button>
               <button className="ghost-button" onClick={() => deleteDevice(device)} type="button">
-                Remove
+                {t("staff.remove")}
               </button>
             </div>
           </article>
